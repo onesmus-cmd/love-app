@@ -1,52 +1,36 @@
 const express = require("express");
 const cors = require("cors");
-const nodemailer = require("nodemailer");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
+// this stores answers temporarily
 let answers = [];
 
-app.post("/answer", async (req, res) => {
+app.post("/answer", (req, res) => {
     const data = req.body;
 
-    answers.push(data);
+    answers.push({
+        ...data,
+        id: answers.length + 1,
+        time: new Date()
+    });
 
-    console.log("Answer received:", data);
-
-    // EMAIL NOTIFICATION
-    try {
-        let transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                user: "YOUR_EMAIL@gmail.com",
-                pass: "YOUR_APP_PASSWORD"
-            }
-        });
-
-        await transporter.sendMail({
-            from: "Love App ❤️",
-            to: "YOUR_EMAIL@gmail.com",
-            subject: "New Response Received",
-            text: `
-Question: ${data.question}
-Answer: ${data.answer}
-Reason: ${data.reason || "none"}
-Time: ${data.time}
-            `
-        });
-
-    } catch (err) {
-        console.log("Email error:", err);
-    }
+    console.log("New answer:", data);
 
     res.json({ success: true });
 });
 
+// SEE ALL ANSWERS (THIS IS WHAT YOU WANT)
 app.get("/answers", (req, res) => {
     res.json(answers);
+});
+
+// OPTIONAL: see latest answer only
+app.get("/latest", (req, res) => {
+    res.json(answers[answers.length - 1] || {});
 });
 
 app.listen(process.env.PORT || 3000, () => {
